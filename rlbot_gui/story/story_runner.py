@@ -15,7 +15,8 @@ from rlbot_gui.story.load_story_descriptions import (
     get_cities,
     get_story_settings,
     get_challenges_by_id,
-    get_scripts_configs
+    get_scripts_configs,
+    get_upgrades
 )
 
 
@@ -36,6 +37,10 @@ def get_cities_json(story_id):
 @eel.expose
 def get_bots_json(story_id):
     return get_bots_configs(story_id)
+
+@eel.expose
+def get_upgrades_json(story_id):
+    return get_upgrades(story_id)
 
 @eel.expose
 def get_story_settings_json(story_id):

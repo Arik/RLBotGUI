@@ -1,30 +1,9 @@
-
-const UPGRADES = [
-    {
-        "id": "boost-33",
-        "text": "Boost Capacity: 33%",
-        "cost": 3,
-    },
-    {
-        "id": "boost-100",
-        "text": "Boost Capacity: 100%",
-        "cost": 3,
-    },
-    {
-        "id": "boost-recharge",
-        "text": "Auto-Recharge Boost",
-        "cost": 4,
-    },
-    {
-        "id": "rumble",
-        "text": "Rumble Powerups",
-        "cost": 6
-    }
-];
-
 export default {
     name: 'story-upgrades',
-    props: { upgradeSaveState: Object },
+    props: {
+        upgradeSaveState: Object,
+        upgrades: Object
+    },
     template: /*html*/`
     <b-list-group>
         <b-list-group-item 
@@ -46,21 +25,20 @@ export default {
     computed: {
         upgrades_ui: function () {
             let currency = this.upgradeSaveState.currency;
-            let result = UPGRADES.map((item) => ({
+            let result = this.upgrades.map((item) => ({
                 id: item.id,
                 text: item.text,
                 cost: item.cost,
-                purchased: Boolean(this.upgradeSaveState[item.id]),
-                available: currency >= item.cost
+                prereqs: item.prereqs,
+                purchased: Boolean(this.upgradeSaveState[item.id])
             }));
 
-            // Screw it, hard coding it is
-            if (!result[0].purchased) {
-                // If boost-33 is not purchased, 
-                // boost-100, boost-recharge is disabled
-                result[1].available = false;
-                result[2].available = false;
-            }
+            result.forEach((item) => (
+                item.available = currency >= item.cost && (!item.prereqs || item.prereqs.length == 0 || (item.prereqs && result.every((other_item) => (
+                    item.prereqs.includes(other_item.id) ? other_item.purchased : true
+                ))))
+            ))
+
             return result;
         },
     },

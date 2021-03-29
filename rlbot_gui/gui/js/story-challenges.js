@@ -213,6 +213,7 @@ export default {
                             <b-tab title="Upgrades">
                                 <story-upgrades 
                                     v-bind:upgradeSaveState="saveState.upgrades"
+                                    v-bind:upgrades="upgrades"
                                     @purchase_upgrade="$emit('purchase_upgrade', $event)">
                                 </story-upgrades>
                             </b-tab>
@@ -369,6 +370,7 @@ export default {
         console.log(this.saveState)
         let cities = await eel.get_cities_json(this.saveState.story_config)();
         this.bots_config = await eel.get_bots_json(this.saveState.story_config)();
+        this.upgrades = await eel.get_upgrades_json(this.saveState.story_config)();
         this.challenges = {}
         for (let city of Object.keys(cities)) {
             this.challenges[city] = cities[city].challenges

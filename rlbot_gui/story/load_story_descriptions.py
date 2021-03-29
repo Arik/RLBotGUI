@@ -74,7 +74,22 @@ def get_scripts_configs(story_id):
     scripts: dict = {}
     if path.exists(specific_scripts_file):
         specific_scripts_file_json = read_json(specific_scripts_file)
-        if "scripts" in specific_scripts_file_json:  #  A "scripts" field is optional
+        if "scripts" in specific_scripts_file_json:  # A "scripts" field is optional
             scripts.update(specific_scripts_file_json["scripts"])
 
     return scripts
+
+
+def get_upgrades(story_id):
+    """
+    Get the upgrades in the story config
+    """
+    specific_upgrades_file = story_id_to_file(story_id)
+
+    upgrades: list = []
+    if path.exists(specific_upgrades_file):
+        specific_upgrades_file_json = read_json(specific_upgrades_file)
+        if "upgrades" in specific_upgrades_file_json:  # An "upgrades" field is optional
+            upgrades.extend(specific_upgrades_file_json["upgrades"])
+
+    return upgrades
