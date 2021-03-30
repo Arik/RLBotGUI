@@ -1,0 +1,5 @@
+{
+    "upgrade-script-base": {
+        "path": ["$RLBOTPACKROOT", "UpgradeScriptBase", "_upgrade_script_base.cfg"]
+    }
+}

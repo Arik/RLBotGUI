@@ -67,11 +67,13 @@ def get_bots_configs(story_id):
 
 def get_scripts_configs(story_id):
     """
-    Get the scripts in the story config
+    Get the base scripts config and merge it with the scripts in the
+    story config
     """
     specific_scripts_file = story_id_to_file(story_id)
+    base_scripts_file = path.join(path.dirname(__file__), f"scripts-base.json")
 
-    scripts: dict = {}
+    scripts: dict = read_json(base_scripts_file)
     if path.exists(specific_scripts_file):
         specific_scripts_file_json = read_json(specific_scripts_file)
         if "scripts" in specific_scripts_file_json:  # A "scripts" field is optional
@@ -80,16 +82,35 @@ def get_scripts_configs(story_id):
     return scripts
 
 
+def get_universal_scripts(story_id):
+    """
+    Get the list of universal script ids
+    """
+    specific_universal_scripts_file = story_id_to_file(story_id)
+
+    universal_scripts: list = []
+    if path.exists(specific_universal_scripts_file):
+        specific_universal_scripts_file_json = read_json(specific_universal_scripts_file)
+        if "universal-scripts" in specific_universal_scripts_file_json:  # A "universal-scripts" field is optional
+            universal_scripts.extend(specific_universal_scripts_file_json["universal-scripts"])
+
+    return universal_scripts
+
+
 def get_upgrades(story_id):
     """
-    Get the upgrades in the story config
+    Get the upgrades in the story config, if the "upgrades"
+    field does not exist use the base upgrades
     """
     specific_upgrades_file = story_id_to_file(story_id)
+    base_upgrades_file = path.join(path.dirname(__file__), f"upgrades-base.json")
 
     upgrades: list = []
     if path.exists(specific_upgrades_file):
         specific_upgrades_file_json = read_json(specific_upgrades_file)
-        if "upgrades" in specific_upgrades_file_json:  # An "upgrades" field is optional
+        if "upgrades" in specific_upgrades_file_json:
             upgrades.extend(specific_upgrades_file_json["upgrades"])
+        else:
+            upgrades.extend(read_json(base_upgrades_file))
 
     return upgrades

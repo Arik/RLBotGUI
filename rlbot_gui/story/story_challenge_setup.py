@@ -73,6 +73,8 @@ def make_match_config(
     """
     match_config = MatchConfig()
 
+    #  TODO: Allow a script to edit the match_config just like the code here is doing
+
     match_config.game_mode = game_mode_types[0]  # Soccar
     if challenge.get("limitations", []).count("half-field"):
         match_config.game_mode = game_mode_types[5] # Heatseeker
@@ -185,11 +187,12 @@ def make_player_configs(
 
 
 def make_script_configs(
-    challenge: dict, all_scripts
+    challenge: dict, all_scripts, scripts: list
 ):
-    script_configs = []
+    scripts.extend(challenge.get("scripts", []))
 
-    for script in challenge.get("scripts", []):
+    script_configs = []
+    for script in scripts:
         script_config = script_path_to_script_config(all_scripts[script]["path"])
         script_configs.append(script_config)
 
@@ -393,6 +396,8 @@ def manage_game_state(
         print("The game was initialized with no cars")
         return early_failure
 
+    # TODO: Allow a script to access the upgrade info (not necessarily at this location)
+
     tick_rate = 120
     results = None
     max_boost = 0
@@ -494,12 +499,12 @@ def run_challenge(
     return game_results
 
 
-def configure_challenge(challenge: dict, saveState, human_picks: List[int], all_bots, all_scripts):
+def configure_challenge(challenge: dict, saveState, human_picks: List[int], all_bots, all_scripts, universal_scripts):
     player_configs = make_player_configs(
         challenge, human_picks, saveState.team_info, saveState.teammates, all_bots
     )
     script_configs = make_script_configs(
-        challenge, all_scripts
+        challenge, all_scripts, universal_scripts
     )
     match_config = make_match_config(challenge, saveState.upgrades, player_configs, script_configs)
 
