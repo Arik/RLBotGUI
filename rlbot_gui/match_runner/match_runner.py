@@ -142,7 +142,7 @@ def get_fresh_setup_manager():
 
 
 def setup_match(
-    setup_manager: SetupManager, match_config: MatchConfig, launcher_pref: RocketLeagueLauncherPreference, extra_script_command_line_arguements: dict = None
+    setup_manager: SetupManager, match_config: MatchConfig, launcher_pref: RocketLeagueLauncherPreference, extra_script_argv: dict = None
 ):
     """Starts the match and bots. Also detects and handles custom maps"""
 
@@ -154,9 +154,9 @@ def setup_match(
         # should now make its own game interface to use.
         setup_manager.game_interface.load_interface(wants_ball_predictions=False, wants_quick_chat=False, wants_game_messages=False)
         setup_manager.load_match_config(match_config)
-        setup_manager.launch_early_start_bot_processes(extra_script_command_line_arguements=extra_script_command_line_arguements)
+        setup_manager.launch_early_start_bot_processes(extra_script_argv=extra_script_argv)
         setup_manager.start_match()
-        setup_manager.launch_bot_processes(extra_script_command_line_arguements=extra_script_command_line_arguements)
+        setup_manager.launch_bot_processes(extra_script_argv=extra_script_argv)
         return setup_manager
 
     game_map = match_config.game_map

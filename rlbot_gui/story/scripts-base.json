@@ -1,5 +1,5 @@
 {
     "upgrade-script-base": {
-        "path": ["$RLBOTPACKROOT", "UpgradeScriptBase", "_upgrade_script_base.cfg"]
+        "path": ["$RLBOTGUIAGENTS", "agents", "DefaultStoryScript", "_default_story_script.cfg"]
     }
 }

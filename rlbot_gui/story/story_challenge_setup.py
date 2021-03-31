@@ -8,7 +8,6 @@ import time
 import traceback
 
 import eel
-from rlbot.agents.base_script import BaseScript
 from rlbot.parsing.bot_config_bundle import get_bot_config_bundle, get_script_config_bundle
 from rlbot.parsing.agent_config_parser import load_bot_appearance
 from rlbot.utils.class_importer import import_class_with_base
@@ -24,6 +23,7 @@ from rlbot.matchconfig.match_config import (
 from rlbot.setup_manager import SetupManager, RocketLeagueLauncherPreference
 
 from rlbot_gui.match_runner.match_runner import get_fresh_setup_manager, setup_match
+from rlbot_gui.story.agents.base_story_script import BaseStoryScript
 
 
 from rlbot_gui import gui as rlbot_gui  # TODO: Need to remove circular import
@@ -73,10 +73,11 @@ def make_match_config(
 
     for script_config in script_configs:
         script_config_bundle = get_script_config_bundle(script_config.config_path)
-        script_class_wrapper = import_class_with_base(script_config_bundle.script_file, BaseScript)  # import_script(python_file) like import_agent(python_file)?
+        script_class_wrapper = import_class_with_base(script_config_bundle.script_file, BaseStoryScript)
         script_class = script_class_wrapper.get_loaded_class()
         if "edit_match_config" in dir(script_class):
-            getattr(script_class, "edit_match_config")(match_config, challenge, upgrades)
+            enabled_upgrades = list(dict(filter(lambda item: item[1], upgrades.items())).keys())
+            script_class.edit_match_config(match_config, challenge, enabled_upgrades)
 
     if DEBUG_MODE_SHORT_GAMES:
         match_config.mutators.max_score = "3 Goals"
@@ -97,6 +98,12 @@ def collapse_path(cfg_path):
             if path.exists(subbed_path):
                 cfg_path = subbed_path
                 break
+
+    if "$RLBOTGUIAGENTS" in cfg_path:
+        this_directory = path.abspath("rlbot_gui/story")
+        subbed_path = cfg_path.replace("$RLBOTGUIAGENTS", this_directory)
+        if path.exists(subbed_path):
+            cfg_path = subbed_path
 
     return cfg_path
 
@@ -432,8 +439,9 @@ def run_challenge(
     match_config: MatchConfig, challenge: dict, upgrades: dict, launcher_pref: RocketLeagueLauncherPreference
 ) -> Tuple[bool, dict]:
     """Launch the game and keep track of the state"""
+    enabled_upgrades = list(dict(filter(lambda item: item[1], upgrades.items())).keys())  # Only pass enabled upgrades
     setup_manager = get_fresh_setup_manager()
-    setup_match(setup_manager, match_config, launcher_pref, extra_script_command_line_arguements={"challenge": str(challenge), "upgrades": str(upgrades)})
+    setup_match(setup_manager, match_config, launcher_pref, extra_script_argv={"challenge": str(challenge), "upgrades": str(enabled_upgrades)})
 
     setup_manager.game_interface.renderer.clear_screen(RENDERING_GROUP)
     game_results = None
