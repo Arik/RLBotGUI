@@ -8,19 +8,12 @@ import time
 import traceback
 
 import eel
-from rlbot.matchconfig.loadout_config import LoadoutConfig
-from rlbot.parsing.bot_config_bundle import get_bot_config_bundle
+from rlbot.agents.base_script import BaseScript
+from rlbot.parsing.bot_config_bundle import get_bot_config_bundle, get_script_config_bundle
 from rlbot.parsing.agent_config_parser import load_bot_appearance
-from rlbot.utils.game_state_util import GameState, CarState
-from rlbot.utils.structures.game_data_struct import GameTickPacket, Vector3
-from rlbot.parsing.match_settings_config_parser import (
-    game_mode_types,
-    boost_amount_mutator_types,
-    map_types,
-    max_score_types,
-    rumble_mutator_types,
-    match_length_types,
-)
+from rlbot.utils.class_importer import import_class_with_base
+from rlbot.utils.structures.game_data_struct import GameTickPacket
+from rlbot.parsing.match_settings_config_parser import game_mode_types, match_length_types
 from rlbot.matchconfig.match_config import (
     PlayerConfig,
     MatchConfig,
@@ -72,25 +65,21 @@ def make_match_config(
     """Setup the match, following the challenge rules and user's upgrades
     """
     match_config = MatchConfig()
-
-    #  TODO: Allow a script to edit the match_config just like the code here is doing
+    match_config.mutators = MutatorConfig()
 
     match_config.game_mode = game_mode_types[0]  # Soccar
-    if challenge.get("limitations", []).count("half-field"):
-        match_config.game_mode = game_mode_types[5] # Heatseeker
     match_config.game_map = challenge.get("map")
     match_config.enable_state_setting = True
 
-    match_config.mutators = MutatorConfig()
-    match_config.mutators.max_score = challenge.get("max_score")
+    for script_config in script_configs:
+        script_config_bundle = get_script_config_bundle(script_config.config_path)
+        script_class_wrapper = import_class_with_base(script_config_bundle.script_file, BaseScript)  # import_script(python_file) like import_agent(python_file)?
+        script_class = script_class_wrapper.get_loaded_class()
+        if "edit_match_config" in dir(script_class):
+            getattr(script_class, "edit_match_config")(match_config, challenge, upgrades)
+
     if DEBUG_MODE_SHORT_GAMES:
         match_config.mutators.max_score = "3 Goals"
-
-    if challenge.get("disabledBoost"):
-        match_config.mutators.boost_amount = boost_amount_mutator_types[4]  # No boost
-
-    if "rumble" in upgrades:
-        match_config.mutators.rumble = rumble_mutator_types[1]  # All rumble
 
     match_config.player_configs = player_configs
     match_config.script_configs = script_configs
@@ -396,20 +385,8 @@ def manage_game_state(
         print("The game was initialized with no cars")
         return early_failure
 
-    # TODO: Allow a script to access the upgrade info (not necessarily at this location)
-
-    tick_rate = 120
-    results = None
-    max_boost = 0
-    if "boost-100" in upgrades:
-        max_boost = 100
-    elif "boost-33" in upgrades:
-        max_boost = 33
-
-    half_field = challenge.get("limitations", []).count("half-field") > 0
 
     stats_tracker = ManualStatsTracker(challenge)
-    last_boost_bump_time = time.monotonic()
     while True:
         try:
             eel.sleep(0)  # yield to allow other gui threads to operate.
@@ -436,30 +413,6 @@ def manage_game_state(
                 setup_failure_freeplay(setup_manager, "Challenge completed by mercy rule!", "green")
                 return True, results
 
-            human_info = packet.game_cars[0]
-            game_state = GameState()
-            human_desired_state = CarState()
-            game_state.cars = {0: human_desired_state}
-
-            changed = False
-            # adjust boost
-            if human_info.boost > max_boost and not half_field:
-                # Adjust boost, unless in heatseeker mode
-                human_desired_state.boost_amount = max_boost
-                changed = True
-
-            if "boost-recharge" in upgrades:
-                # increase boost at 10% per second
-                now = time.monotonic()
-                if human_info.boost < max_boost and (now - last_boost_bump_time > 0.1):
-                    changed = True
-                    last_boost_bump_time = now
-                    human_desired_state.boost_amount = min(human_info.boost + 1, max_boost)
-
-
-            if changed:
-                setup_manager.game_interface.set_game_state(game_state)
-
             if packet.game_info.is_match_ended:
                 break
 
@@ -480,7 +433,7 @@ def run_challenge(
 ) -> Tuple[bool, dict]:
     """Launch the game and keep track of the state"""
     setup_manager = get_fresh_setup_manager()
-    setup_match(setup_manager, match_config, launcher_pref)
+    setup_match(setup_manager, match_config, launcher_pref, extra_script_command_line_arguements={"challenge": str(challenge), "upgrades": str(upgrades)})
 
     setup_manager.game_interface.renderer.clear_screen(RENDERING_GROUP)
     game_results = None
