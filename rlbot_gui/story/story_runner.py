@@ -55,6 +55,9 @@ def story_load_save():
     settings = QSettings("rlbotgui", "story_save")
     state = settings.value("save")
     if state:
+        if "currency" not in state:  # Change old saves to the new format
+            state["currency"] = state["upgrades"]["currency"]
+            del state["upgrades"]["currency"]
         print(f"Save state: {state}")
         CURRENT_STATE = StoryState.from_dict(state)
         # default values should get added if missing
@@ -133,25 +136,26 @@ class StoryState:
         self.challenges_attempts = {}  # many entries per challenge
         self.challenges_completed = {}  # one entry per challenge
 
-        self.upgrades = {"currency": 0}
+        self.currency = 0
+        self.upgrades = {}
 
     def add_purchase(self, id, current_currency, cost):
         """The only validation we do is to make sure current_currency is correct.
         This is NOT a security mechanism, this is a bug prevention mechanism to
         avoid accidental double clicks.
         """
-        if self.upgrades["currency"] == current_currency:
+        if self.currency == current_currency:
             self.upgrades[id] = True
-            self.upgrades["currency"] -= cost
+            self.currency -= cost
 
     def add_recruit(self, id, current_currency):
         """The only validation we do is to make sure current_currency is correct.
         This is NOT a security mechanism, this is a bug prevention mechanism to
         avoid accidental double clicks.
         """
-        if self.upgrades["currency"] == current_currency:
+        if self.currency == current_currency:
             self.teammates.append(id)
-            self.upgrades["currency"] -= 1
+            self.currency -= 1
 
     def add_match_result(
         self, challenge_id: str, challenge_completed: bool, game_results
@@ -171,7 +175,7 @@ class StoryState:
         if challenge_completed:
             index = len(self.challenges_attempts[challenge_id]) - 1
             self.challenges_completed[challenge_id] = index
-            self.upgrades["currency"] += 2
+            self.currency += 2
 
     @staticmethod
     def new(player_settings, story_settings):

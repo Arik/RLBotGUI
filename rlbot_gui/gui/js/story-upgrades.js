@@ -1,6 +1,7 @@
 export default {
     name: 'story-upgrades',
     props: {
+        currency: 0,
         upgradeSaveState: Object,
         upgrades: Object
     },
@@ -24,7 +25,7 @@ export default {
     `,
     computed: {
         upgrades_ui: function () {
-            let currency = this.upgradeSaveState.currency;
+            let currency = this.currency;
             let result = this.upgrades.map((item) => ({
                 id: item.id,
                 text: item.text,
@@ -47,7 +48,7 @@ export default {
             console.log("In purchases", item.id);
             this.$emit('purchase_upgrade', {
                 id: item.id,
-                currentCurrency: this.upgradeSaveState.currency,
+                currentCurrency: this.currency,
                 cost: item.cost
             });
         }

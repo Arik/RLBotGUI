@@ -204,14 +204,15 @@ export default {
                         <div show variant="primary"
                             class="d-flex justify-content-between align-items-center w-100 mt-1 p-3 bg-info text-white">
                             <div>Currency</div>
-                            <div>{{saveState.upgrades.currency}} <b-img src="imgs/story/coin.png" height="30px"/></div>
+                            <div>{{saveState.currency}} <b-img src="imgs/story/coin.png" height="30px"/></div>
                         </div>
                     </b-row>
                     <b-row class="mt-1 overflow-auto" style="max-height: 300px; min-height:300px">
                     <b-card no-body class="w-100">
                         <b-tabs content-class="mt-3" fill class="story-card-text">
                             <b-tab title="Upgrades">
-                                <story-upgrades 
+                                <story-upgrades
+                                    v-bind:currency="saveState.currency"
                                     v-bind:upgradeSaveState="saveState.upgrades"
                                     v-bind:upgrades="upgrades"
                                     @purchase_upgrade="$emit('purchase_upgrade', $event)">
@@ -220,8 +221,8 @@ export default {
                             <b-tab active title="Teammates">
                                 <story-recruit-list 
                                     v-bind:recruitables="recruit_list"
-                                    v-bind:currency="saveState.upgrades.currency"
-                                    @recruit="$emit('recruit', {id: $event, currentCurrency: saveState.upgrades.currency})"
+                                    v-bind:currency="saveState.currency"
+                                    @recruit="$emit('recruit', {id: $event, currentCurrency: saveState.currency})"
                                 >
                                 </story-recruit-list>
                             </b-tab>
