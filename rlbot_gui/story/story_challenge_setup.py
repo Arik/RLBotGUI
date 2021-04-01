@@ -61,7 +61,7 @@ def setup_failure_freeplay(setup_manager: SetupManager, message: str, color_key=
 
 def make_match_config(
     challenge: dict, upgrades: dict, player_configs: List[PlayerConfig], script_configs: List[ScriptConfig]
-):
+):  # TODO: Let scripts edit match config
     """Setup the match, following the challenge rules and user's upgrades
     """
     match_config = MatchConfig()
@@ -70,13 +70,6 @@ def make_match_config(
     match_config.game_mode = game_mode_types[0]  # Soccar
     match_config.game_map = challenge.get("map")
     match_config.enable_state_setting = True
-
-    for script_config in script_configs:
-        script_config_bundle = get_script_config_bundle(script_config.config_path)
-        script_class_wrapper = import_class_with_base(script_config_bundle.script_file, BaseScript)  # import_script(python_file) like import_agent(python_file)?
-        script_class = script_class_wrapper.get_loaded_class()
-        if "edit_match_config" in dir(script_class):
-            getattr(script_class, "edit_match_config")(match_config, challenge, upgrades)
 
     if DEBUG_MODE_SHORT_GAMES:
         match_config.mutators.max_score = "3 Goals"
