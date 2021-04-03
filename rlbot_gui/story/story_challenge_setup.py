@@ -76,7 +76,7 @@ def make_match_config(
         script_class_wrapper = import_class_with_base(script_config_bundle.script_file, BaseStoryScript)
         script_class = script_class_wrapper.get_loaded_class()
         if "edit_match_config" in dir(script_class):
-            enabled_upgrades = list(dict(filter(lambda item: item[1], upgrades.items())).keys())
+            enabled_upgrades = list(filter(lambda upgrade: upgrades[upgrade], upgrades.keys()))
             script_class.edit_match_config(match_config, challenge, enabled_upgrades)
 
     if DEBUG_MODE_SHORT_GAMES:
@@ -442,9 +442,9 @@ def run_challenge(
     match_config: MatchConfig, challenge: dict, upgrades: dict, launcher_pref: RocketLeagueLauncherPreference
 ) -> Tuple[bool, dict]:
     """Launch the game and keep track of the state"""
-    enabled_upgrades = list(dict(filter(lambda item: item[1], upgrades.items())).keys())  # Only pass enabled upgrades
+    enabled_upgrades = list(filter(lambda upgrade: upgrades[upgrade], upgrades.keys()))  # Only pass enabled upgrades
     setup_manager = get_fresh_setup_manager()
-    setup_match(setup_manager, match_config, launcher_pref, extra_script_argv={"challenge": str(challenge), "upgrades": str(enabled_upgrades)})
+    setup_match(setup_manager, match_config, launcher_pref, extra_script_argv={"--challenge": str(challenge), "--upgrades": str(enabled_upgrades)})
 
     setup_manager.game_interface.renderer.clear_screen(RENDERING_GROUP)
     game_results = None
